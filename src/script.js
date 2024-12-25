@@ -3,6 +3,8 @@ import './style.css'
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import GUI from 'lil-gui';
 import {RGBELoader} from 'three/examples/jsm/loaders/RGBELoader.js';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 const gui = new GUI();
 
@@ -14,6 +16,31 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+
+//fontLoader
+const fontLoader = new FontLoader();
+
+// بارگذاری فونت
+fontLoader.load('fonts/Vazir_Black.json', (font) => {
+    // ساخت متن با استفاده از فونت لود شده
+    const textGeometry = new TextGeometry('shahar yeri', {
+        font: font,
+        size: 1,          // اندازه متن
+        height: 0.2,      // ضخامت متن
+        curveSegments: 12, // تعداد سگمنت‌ها برای انحنای بهتر
+        bevelEnabled: true, // فعال کردن لبه‌های متن
+        bevelThickness: 0.03, // ضخامت لبه
+        bevelSize: 0.02,     // فاصله لبه
+        bevelSegments: 5,     // تعداد سگمنت‌های لبه
+    });
+    // textGeometry.center()
+
+    const textMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff }); // متریال برای متن
+    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+
+    textMesh.position.set(1, 0.69, 0); // موقعیت متن
+    scene.add(textMesh); // افزودن متن به صحنه
+});
 
 // Object
 const boxGeometry = new THREE.BoxGeometry(2, 4, 1,2,2,2); // عرض، ارتفاع، عمق
@@ -56,8 +83,6 @@ plane.rotation.x = -Math.PI / 2; // چرخاندن صفحه به حالت افق
 plane.position.y = 0; // تنظیم ارتفاع صفحه زیر شیء
 plane.receiveShadow = true; // پذیرش سایه روی صفحه
 scene.add(plane);
-
-gui.add(plane.material,'wireframe')
 
 //debug object
 gui.add(coin.position, 'y')
@@ -103,7 +128,7 @@ window.addEventListener('mousemove', (event) => {
     coursor.y = -(event.clientY / sizes.height - 0.5)
 })
 
-//Axcis
+//Axis
 const axesHelper = new THREE.AxesHelper(2)
 scene.add(axesHelper)
 
