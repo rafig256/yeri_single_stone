@@ -73,6 +73,15 @@ group.add(coin);
 // اضافه کردن گروه به صحنه
 scene.add(group);
 
+//earth
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(50,50),
+    new THREE.MeshStandardMaterial({color: '#a9c388'})
+)
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.001;
+scene.add(floor)
+
 // ایجاد یک صفحه برای نمایش سایه
 const planeGeometry = new THREE.PlaneGeometry(20, 20);
 const planeMaterial = new THREE.ShadowMaterial({
