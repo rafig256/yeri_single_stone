@@ -8,9 +8,30 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 const gui = new GUI();
 
+//Texture
 const loadingManager = new THREE.LoadingManager();
 const textureLoader = new THREE.TextureLoader(loadingManager)
 const frontTexture = textureLoader.load('/textures/stone/RedRockBaseColor.png')
+
+const grassColorTexture = textureLoader.load('/textures/grass/color.jpg'); // رنگ اصلی
+const grassAmbientOcclusionTexture = textureLoader.load('/textures/grass/ambientOcclusion.jpg'); // سایه‌زنی محیطی
+const grassNormalTexture = textureLoader.load('/textures/grass/normal.jpg'); // نرمال مپ
+const grassRoughnessTexture = textureLoader.load('/textures/grass/roughness.jpg'); // زبری
+
+// تکرار کردن تکسچرها برای پوشش کل زمین
+grassColorTexture.wrapS = grassColorTexture.wrapT = THREE.RepeatWrapping;
+grassAmbientOcclusionTexture.wrapS = grassAmbientOcclusionTexture.wrapT = THREE.RepeatWrapping;
+grassNormalTexture.wrapS = grassNormalTexture.wrapT = THREE.RepeatWrapping;
+grassRoughnessTexture.wrapS = grassRoughnessTexture.wrapT = THREE.RepeatWrapping;
+
+// تعداد تکرار در محورهای X و Y
+const repeatTimes = 16; // مثلاً 8 بار در هر محور
+grassColorTexture.repeat.set(repeatTimes, repeatTimes);
+grassAmbientOcclusionTexture.repeat.set(repeatTimes, repeatTimes);
+grassNormalTexture.repeat.set(repeatTimes, repeatTimes);
+grassRoughnessTexture.repeat.set(repeatTimes, repeatTimes);
+
+
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -43,23 +64,23 @@ fontLoader.load('fonts/Vazir_Black.json', (font) => {
 });
 
 // Object
-const boxGeometry = new THREE.BoxGeometry(2, 4, 1,2,2,2); // عرض، ارتفاع، عمق
+const boxGeometry = new THREE.BoxGeometry(0.5, 2, 0.2,2,2,2); // عرض، ارتفاع، عمق
 const boxMaterial = new THREE.MeshStandardMaterial({
     map: frontTexture,
     roughness: 0.8 // میزان زبری
 });
 const box = new THREE.Mesh(boxGeometry, boxMaterial);
-box.position.y = 2; // بالاتر بردن منشور
+box.position.y = 0.5; // بالاتر بردن منشور
 box.castShadow = true; // ایجاد سایه از منشور
 
 //ایجاد دیسک
-const coinGeometry = new THREE.CylinderGeometry(1, 1, 1, 64); // شعاع بالا، شعاع پایین، ضخامت = 1، تعداد اضلاع = 64
+const coinGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 64); // شعاع بالا، شعاع پایین، ضخامت = 1، تعداد اضلاع = 64
 const coinMaterial = new THREE.MeshStandardMaterial({
     map: frontTexture,
     roughness: 0.8,   // کمی زبری برای واقعی‌تر شدن
 });
 const coin = new THREE.Mesh(coinGeometry, coinMaterial);
-coin.position.y = 4; // بالاتر بردن سکه
+coin.position.y = 1.5; // بالاتر بردن سکه
 coin.rotation.z = Math.PI/2
 coin.rotation.y = Math.PI/2
 coin.castShadow = true; // ایجاد سایه از سکه
@@ -74,12 +95,28 @@ group.add(coin);
 scene.add(group);
 
 //earth
-const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(50,50),
-    new THREE.MeshStandardMaterial({color: '#a9c388'})
-)
+
+// تعریف متریال زمین
+const floorMaterial = new THREE.MeshStandardMaterial({
+    map: grassColorTexture,
+    aoMap: grassAmbientOcclusionTexture,
+    normalMap: grassNormalTexture,
+    roughnessMap: grassRoughnessTexture,
+    roughness: 0.8 // کنترل زبری
+});
+
+const floorGeometry = new THREE.PlaneGeometry(20, 20, 50, 50); // ابعاد زمین
+
+const floor = new THREE.Mesh(floorGeometry, floorMaterial)
+
 floor.rotation.x = -Math.PI / 2;
-floor.position.y = -0.001;
+floor.position.y = -0.01;
+
+floor.geometry.setAttribute(
+    'uv2',
+    new THREE.BufferAttribute(floorGeometry.attributes.uv.array, 2) // لازم برای aoMap
+);
+
 scene.add(floor)
 
 // ایجاد یک صفحه برای نمایش سایه
@@ -105,6 +142,15 @@ gui.add(coin.material, 'wireframe')
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(5, 10, 5);
 light.castShadow = true; // فعال کردن سایه از منبع نور
+//shadow
+light.shadow.mapSize.width = 1024; // افزایش رزولوشن سایه (برای کیفیت بهتر)
+light.shadow.mapSize.height = 1024;
+light.shadow.camera.near = 0.5; // فاصله نزدیک برای سایه
+light.shadow.camera.far = 50; // فاصله دور برای سایه
+light.shadow.camera.left = -10; // تنظیم محدوده‌ی سایه
+light.shadow.camera.right = 10;
+light.shadow.camera.top = 10;
+light.shadow.camera.bottom = -10;
 scene.add(light);
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
